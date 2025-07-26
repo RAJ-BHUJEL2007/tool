@@ -1,0 +1,255 @@
+/*
+Bharat Score - A Cricket Live Score App by Raj Bhujel
+Frontend: React + Tailwind CSS
+Backend: Node.js + Express
+SEO Optimized | Google AdSense Ready | Mobile Responsive
+*/
+
+// File: index.js (Entry Point)
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./index.css";
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+
+// File: index.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Styles */
+body {
+  @apply bg-gray-100 text-gray-800;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+// File: App.jsx
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import MatchDetails from "./pages/MatchDetails";
+import Stats from "./pages/Stats";
+import News from "./pages/News";
+import Admin from "./pages/Admin";
+
+const App = () => (
+  <Router>
+    <Navbar />
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/match/:id" element={<MatchDetails />} />
+      <Route path="/stats" element={<Stats />} />
+      <Route path="/news" element={<News />} />
+      <Route path="/admin" element={<Admin />} />
+    </Routes>
+  </Router>
+);
+
+export default App;
+
+// File: components/Navbar.jsx
+import React from "react";
+import { Link } from "react-router-dom";
+
+const Navbar = () => (
+  <nav className="bg-white shadow p-4 flex justify-between items-center">
+    <Link to="/" className="text-2xl font-bold text-blue-600">🇮🇳 Bharat Score</Link>
+    <div className="space-x-4">
+      <Link to="/" className="hover:underline">Home</Link>
+      <Link to="/stats" className="hover:underline">Stats</Link>
+      <Link to="/news" className="hover:underline">News</Link>
+      <Link to="/admin" className="hover:underline">Admin</Link>
+    </div>
+  </nav>
+);
+
+export default Navbar;
+
+// File: pages/Home.jsx
+import React, { useEffect, useState } from "react";
+
+const Home = () => {
+  const [matches, setMatches] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/live-matches")
+      .then((res) => res.json())
+      .then((data) => setMatches(data.matches))
+      .catch((err) => console.error(err));
+  }, []);
+
+  return (
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">Live Matches</h1>
+      <div className="grid gap-4">
+        {matches.map((match) => (
+          <div key={match.id} className="bg-white p-4 shadow rounded">
+            <p>{match.team1} vs {match.team2}</p>
+            <p className="text-sm text-gray-500">{match.status}</p>
+            <a href={`/match/${match.id}`} className="text-blue-500">View Details</a>
+          </div>
+        ))}
+      </div>
+      {/* Ad space */}
+      <div className="mt-8">
+        <div id="adsense-ad" className="w-full h-20 bg-gray-200 text-center pt-6">AdSense Ad</div>
+      </div>
+    </div>
+  );
+};
+
+export default Home;
+
+// File: pages/MatchDetails.jsx
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
+const MatchDetails = () => {
+  const { id } = useParams();
+  const [details, setDetails] = useState(null);
+
+  useEffect(() => {
+    fetch(`/api/match/${id}`)
+      .then((res) => res.json())
+      .then((data) => setDetails(data))
+      .catch((err) => console.error(err));
+  }, [id]);
+
+  if (!details) return <p>Loading...</p>;
+
+  return (
+    <div className="p-6">
+      <h2 className="text-lg font-bold">{details.matchTitle}</h2>
+      <p>{details.score}</p>
+      <p>{details.commentary}</p>
+      <p>Players: {details.players.join(", ")}</p>
+    </div>
+  );
+};
+
+export default MatchDetails;
+
+// File: pages/Stats.jsx
+import React from "react";
+
+const Stats = () => (
+  <div className="p-6">
+    <h1 className="text-xl font-bold mb-4">Team & Player Stats</h1>
+    <p>Stats will be shown here from API</p>
+  </div>
+);
+
+export default Stats;
+
+// File: pages/News.jsx
+import React, { useEffect, useState } from "react";
+
+const News = () => {
+  const [news, setNews] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/news")
+      .then((res) => res.json())
+      .then((data) => setNews(data));
+  }, []);
+
+  return (
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">Cricket News</h1>
+      <div className="grid gap-4">
+        {news.map((n) => (
+          <div key={n.id} className="bg-white p-4 shadow rounded">
+            <h2 className="text-lg font-semibold">{n.title}</h2>
+            <p>{n.content}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default News;
+
+// File: pages/Admin.jsx
+import React, { useState } from "react";
+
+const Admin = () => {
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  const submitNews = () => {
+    fetch("/api/news", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, content })
+    })
+      .then(res => res.json())
+      .then(() => alert("News added successfully"));
+  };
+
+  return (
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">Admin Panel</h1>
+      <input type="text" placeholder="Title" className="border p-2 mb-2 w-full" value={title} onChange={e => setTitle(e.target.value)} />
+      <textarea placeholder="Content" className="border p-2 mb-2 w-full" value={content} onChange={e => setContent(e.target.value)} />
+      <button onClick={submitNews} className="bg-blue-600 text-white px-4 py-2">Add News</button>
+    </div>
+  );
+};
+
+export default Admin;
+
+// File: server.js (Express Backend)
+const express = require("express");
+const cors = require("cors");
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Dummy Endpoints
+app.get("/api/live-matches", (req, res) => {
+  res.json({ matches: [{ id: "123", team1: "India", team2: "Australia", status: "Live - India 120/2" }] });
+});
+
+app.get("/api/match/:id", (req, res) => {
+  res.json({ matchTitle: "India vs Australia", score: "India 120/2", commentary: "Dhoni hits a six!", players: ["Dhoni", "Virat"] });
+});
+
+app.get("/api/news", (req, res) => {
+  res.json([{ id: 1, title: "India Wins!", content: "India beat Australia in a thrilling match." }]);
+});
+
+app.post("/api/news", (req, res) => {
+  const { title, content } = req.body;
+  console.log("News Added:", title);
+  res.json({ success: true });
+});
+
+app.listen(5000, () => console.log("Server running on http://localhost:5000"));
+
+// File: public/index.html (SEO + AdSense + Favicon)
+/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Live Cricket Scores, Stats & News - Bharat Score" />
+  <title>Bharat Score | Live Cricket Updates</title>
+  <link rel="icon" href="/logo.svg" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" crossorigin="anonymous"></script>
+  <script>
+    (adsbygoogle = window.adsbygoogle || []).push({
+      google_ad_client: "ca-pub-XXXXXXXXXXXXXXXX",
+      enable_page_level_ads: true
+    });
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>
+*/
